@@ -32,7 +32,6 @@
             padding-top: env(safe-area-inset-top);
         }
 
-        /* NEW: GAME SELECTOR SECTION */
         #game-identifier-bar {
             background-color: #1c1c1e;
             padding: 8px 12px;
@@ -283,7 +282,7 @@
         <div id="timer-container">
             <div>
                 <span class="score-label" style="display:block;">GAME CLOCK</span>
-                <div id="game-timer" class="timer-paused">21:00</div>
+                <div id="game-timer" class="timer-paused">20:00</div>
             </div>
             <div id="timer-controls">
                 <button id="timer-toggle-btn" onclick="toggleTimer()">START</button>
@@ -359,7 +358,6 @@
     </div>
 
     <script>
-        // --- MULTI-GAME STATE ---
         let currentGameID = "Default";
         let events = [];
         let currentHalf = 1; 
@@ -371,7 +369,6 @@
         let currentNumber = "";
 
         const STATS_REQUIRING_NUM = ['Goal', 'Missed Shot', 'Assist', 'Yellow Card', 'Save'];
-        const GAME_SUMMARY_STAT_TYPES = ['Goal', 'Save', 'Missed Shot', 'Assist', 'Draw', 'TO Unforced', 'TO Forced', 'Yellow Card'];
 
         window.onload = function() {
             const lastActive = localStorage.getItem('lastActiveGame');
@@ -385,10 +382,7 @@
         function switchGameContext() {
             const input = document.getElementById('game-id-input').value.trim();
             if(!input) return;
-            
-            // If timer is running, pause it before switching
-            if(timerInterval) toggleTimer();
-            
+            stopTimerEngine(); // Ensure timer stops on context switch
             currentGameID = input;
             localStorage.setItem('lastActiveGame', currentGameID);
             loadGameData();
@@ -397,16 +391,12 @@
         function loadGameData() {
             const savedEvents = localStorage.getItem(`laxEvents_${currentGameID}`);
             events = savedEvents ? JSON.parse(savedEvents) : [];
-            
             const savedHalf = localStorage.getItem(`half_${currentGameID}`);
             currentHalf = savedHalf ? parseInt(savedHalf) : 1;
-            
             const savedDur = localStorage.getItem(`dur_${currentGameID}`);
             currentDurationMinutes = savedDur ? parseInt(savedDur) : 20;
-            
             const savedTime = localStorage.getItem(`time_${currentGameID}`);
             timeLeftSeconds = (savedTime !== null) ? parseInt(savedTime) : (currentDurationMinutes * 60);
-
             document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
             document.getElementById('game-timer').className = 'timer-paused';
             updateUI();
@@ -421,23 +411,30 @@
             updateUI();
         }
 
-        // --- TIMER LOGIC ---
         function formatTime(s) {
             const m = Math.floor(Math.max(0, s) / 60);
             const rs = Math.max(0, s) % 60;
             return `${m.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
         }
 
-        function toggleTimer() {
-            const btn = document.getElementById('timer-toggle-btn');
-            const display = document.getElementById('game-timer');
-
+        // Helper to force stop the logic loop
+        function stopTimerEngine() {
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
-                btn.innerText = 'START';
-                btn.classList.remove('pause');
-                display.className = 'timer-paused';
+            }
+            const btn = document.getElementById('timer-toggle-btn');
+            const display = document.getElementById('game-timer');
+            btn.innerText = 'START';
+            btn.classList.remove('pause');
+            display.className = 'timer-paused';
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timer-toggle-btn');
+            const display = document.getElementById('game-timer');
+            if (timerInterval) {
+                stopTimerEngine();
                 saveAndRender();
             } else {
                 if (timeLeftSeconds <= 0) return alert("Time expired.");
@@ -446,13 +443,12 @@
                 btn.innerText = 'PAUSE';
                 btn.classList.add('pause');
                 display.className = 'timer-running';
-
                 timerInterval = setInterval(() => {
                     const elapsed = Math.floor((Date.now() - currentRunStartTime) / 1000);
                     timeLeftSeconds = Math.max(0, baseTime - elapsed);
                     display.innerText = formatTime(timeLeftSeconds);
                     if (timeLeftSeconds <= 0) {
-                        toggleTimer();
+                        stopTimerEngine();
                         alert("Clock Expired!");
                     }
                 }, 200);
@@ -469,7 +465,6 @@
             }
         }
 
-        // --- STAT HANDLING ---
         function handleStatClick(type) {
             if (currentHalf === 3) return alert("Game Over. Start New Game.");
             pendingStat.type = type;
@@ -485,7 +480,6 @@
             const needsNum = (team === 'Our' && pendingStat.requiresNumber) || 
                             (team === 'Opponent' && ['Goal', 'Yellow Card', 'Save'].includes(pendingStat.type)) || 
                             isSaveInterchanged;
-
             if (needsNum) {
                 currentNumber = "";
                 document.getElementById('numpad-display').innerText = "_";
@@ -522,13 +516,28 @@
             }
         }
 
+        // FIXED: Stop the engine explicitly on transition
         function switchHalf() {
             if (currentHalf === 1) {
-                if(confirm("End H1?")) { currentHalf = 2; timeLeftSeconds = currentDurationMinutes * 60; }
+                if(confirm("End H1?")) { 
+                    stopTimerEngine(); // Stop logic loop
+                    currentHalf = 2; 
+                    timeLeftSeconds = currentDurationMinutes * 60; 
+                    document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
+                }
             } else if (currentHalf === 2) {
-                if(confirm("End Game?")) currentHalf = 3;
+                if(confirm("End Game?")) {
+                    stopTimerEngine();
+                    currentHalf = 3;
+                }
             } else {
-                if(confirm("Reset Game Data?")) { events = []; currentHalf = 1; timeLeftSeconds = currentDurationMinutes * 60; }
+                if(confirm("Reset Game Data?")) { 
+                    stopTimerEngine();
+                    events = []; 
+                    currentHalf = 1; 
+                    timeLeftSeconds = currentDurationMinutes * 60; 
+                    document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
+                }
             }
             updateHalfButton();
             saveAndRender();
@@ -553,7 +562,6 @@
             document.getElementById('score-our-saves').innerText = ourS;
             document.getElementById('score-opp-saves').innerText = oppS;
 
-            // History
             const hist = document.getElementById('history-container');
             hist.innerHTML = events.map(e => `
                 <div class="history-item">
@@ -572,21 +580,23 @@
         }
 
         function updateTrackers() {
-            const getTop = (tm) => {
-                const goals = events.filter(e => e.type === 'Goal' && e.team === tm && e.player && e.player !== '?');
+            const getLeader = (team, type) => {
+                const filtered = events.filter(e => e.type === type && e.team === team && e.player && e.player !== '?');
                 const counts = {};
-                goals.forEach(g => counts[g.player] = (counts[g.player] || 0) + 1);
-                let top = {p: '--', c: 0};
-                for(let p in counts) if(counts[p] > top.c) top = {p, c: counts[p]};
-                return top.c > 0 ? `#${top.p} (${top.c})` : '--';
+                filtered.forEach(item => counts[item.player] = (counts[item.player] || 0) + 1);
+                let leader = {p: '--', c: 0};
+                for(let p in counts) if(counts[p] > leader.c) leader = {p, c: counts[p]};
+                return leader.c > 0 ? `#${leader.p} (${leader.c})` : '--';
             };
-            document.getElementById('our-top-scorer').innerText = getTop('Our');
-            document.getElementById('opp-top-scorer').innerText = getTop('Opponent');
 
+            document.getElementById('our-top-scorer').innerText = getLeader('Our', 'Goal');
+            document.getElementById('opp-top-scorer').innerText = getLeader('Opponent', 'Goal');
             const ourY = events.filter(e => e.type === 'Yellow Card' && e.team === 'Our').length;
             const oppY = events.filter(e => e.type === 'Yellow Card' && e.team === 'Opponent').length;
             document.getElementById('our-total-cards').innerText = ourY;
             document.getElementById('opp-total-cards').innerText = oppY;
+            document.getElementById('our-card-leader').innerText = getLeader('Our', 'Yellow Card');
+            document.getElementById('opp-card-leader').innerText = getLeader('Opponent', 'Yellow Card');
         }
 
         function updateHalfButton() {
