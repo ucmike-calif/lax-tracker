@@ -3,21 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LaxTracker Multi-Game</title>
+    <title>LaxTracker Pro</title>
     <style>
         :root {
             --bg-color: #f2f2f7;
             --card-bg: #ffffff;
-            --our-team-color: #34c759; /* Green */
-            --opponent-color: #ff3b30; /* Red */
+            --our-team-color: #34c759;
+            --opponent-color: #ff3b30;
             --blue: #007aff;
             --orange: #ff9500;
             --purple: #af52de;
-            --yellow: #ffcc00;
             --teal: #30b0c7;
-            --card-color: #ffcc00; /* Yellow for cards */
-            --save-color: #00aaff; /* Light blue for saves */
-            --to-color: #ff6347; /* Tomato red for turnovers */
+            --card-color: #ffcc00;
         }
 
         body {
@@ -77,14 +74,12 @@
             font-weight: bold; 
             display: block; 
             line-height: 1.1;
-            white-space: nowrap;
         }
         .score-label { 
             font-size: 7px; 
             color: #666; 
             font-weight: bold; 
             text-transform: uppercase; 
-            line-height: 1.0;
         }
         .team-our { color: var(--our-team-color); }
         .team-opp { color: var(--opponent-color); }
@@ -117,8 +112,6 @@
             font-size: 14px; 
             font-weight: 800;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: pointer;
             text-transform: uppercase;
             touch-action: manipulation;
         }
@@ -128,12 +121,12 @@
         .btn-goal { background-color: var(--our-team-color); }
         .btn-missed { background-color: var(--blue); } 
         .btn-assist { background-color: var(--teal); }
+        .btn-save { background-color: #00aaff; }
         .btn-draw { background-color: var(--purple); }
         .btn-to-our { background-color: #ff6347; }
         .btn-to-opp { background-color: #cc3333; }
-        .btn-save { background-color: var(--save-color); }
-        .btn-card { background-color: var(--card-color); color: #333 !important; padding: 8px; font-size: 12px; } 
-        .btn-note { background-color: #8e8e93; padding: 8px; font-size: 12px; } 
+        .btn-card { background-color: var(--card-color); color: #333 !important; } 
+        .btn-note { background-color: #8e8e93; } 
         .btn-utility { padding: 8px; font-size: 12px; } 
 
         #top-scorer-container, #card-tracker-container {
@@ -144,16 +137,13 @@
             padding: 5px 10px; 
             border-radius: 8px;
             margin-bottom: 6px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        #card-tracker-container { border: 1px solid var(--card-color); }
 
-        .tracker-info { flex: 1; padding: 0 2px; }
-        .tracker-label { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; margin-bottom: 1px; }
+        .tracker-info { flex: 1; }
+        .tracker-label { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; }
         .tracker-details { font-size: 13px; font-weight: 900; }
-        .tracker-details span { font-size: 10px; font-weight: normal; }
-        .tracker-details.sub-label { font-size: 8px; color: #888; margin-top: 1px; }
 
         #timer-container {
             display: flex;
@@ -163,27 +153,23 @@
             padding: 5px 10px; 
             border-radius: 8px;
             margin-bottom: 6px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         
-        #timer-controls { display: flex; gap: 5px; align-items: center; }
-        #game-timer { font-size: 22px; font-weight: 900; margin-right: 8px; }
+        #game-timer { font-size: 22px; font-weight: 900; }
         .timer-running { color: var(--opponent-color); }
         .timer-paused { color: var(--blue); }
 
         #timer-toggle-btn {
             background-color: var(--our-team-color);
-            color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold;
+            color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold;
         }
         #timer-toggle-btn.pause { background-color: var(--orange); }
-        #set-time-btn { background-color: var(--teal); color: white; border: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-        
+
         #history-container {
             background-color: var(--card-bg);
             border-top: 1px solid #ccc;
             height: 20%;
             overflow-y: auto;
-            flex-shrink: 0;
         }
 
         .history-item {
@@ -193,10 +179,8 @@
             justify-content: space-between;
             align-items: center;
         }
-        .history-info { font-weight: 500; font-size: 14px; }
-        .history-player { color: #888; margin-left: 8px; font-size: 0.9em; }
-        .delete-btn { background: none; border: none; color: var(--opponent-color); font-weight: bold; font-size: 14px; padding: 5px; }
 
+        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
@@ -206,27 +190,23 @@
         #team-modal-container, #to-modal-container, #numpad-container {
             background: white; width: 100%; border-radius: 20px 20px 0 0;
             padding: 20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
-            animation: slideUp 0.3s ease-out;
         }
         .team-choice-grid { display: flex; gap: 20px; margin: 20px 0; }
-        .team-choice-btn { flex: 1; padding: 30px 10px; font-size: 18px; font-weight: bold; border-radius: 10px; border: none; color: white; }
+        .team-choice-btn { flex: 1; padding: 25px 10px; font-size: 18px; font-weight: bold; border-radius: 10px; border: none; color: white; }
         .team-our-btn { background-color: var(--our-team-color); }
         .team-opp-btn { background-color: var(--opponent-color); }
-        .modal-title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
         
-        #numpad-display { font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 20px; height: 50px; border-bottom: 2px solid #eee; }
-        
+        #numpad-display { font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 15px; border-bottom: 2px solid #eee; }
         .numpad-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .num-btn { background: #e5e5ea; border: none; padding: 15px; font-size: 24px; border-radius: 10px; }
         .num-btn.ok { background-color: var(--our-team-color); color: white; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div id="game-identifier-bar">
         <span class="game-label">Game:</span>
-        <input type="text" id="game-id-input" placeholder="e.g. Field 1 / Varsity" onchange="switchGameContext()">
+        <input type="text" id="game-id-input" placeholder="Field/Team Name" onchange="switchGameContext()">
     </div>
 
     <div id="scoreboard">
@@ -242,20 +222,6 @@
             <div class="score-item">
                 <span class="score-val"><span class="team-our" id="score-our-to">0</span><span class="score-sep">/</span><span class="team-opp" id="score-opp-to">0</span></span>
                 <span class="score-label">TOs</span>
-            </div>
-        </div>
-        <div class="score-row">
-             <div class="score-item">
-                <span class="score-val"><span class="team-our" id="score-our-total-shots">0</span><span class="score-sep">/</span><span class="team-opp" id="score-opp-total-shots">0</span></span>
-                <span class="score-label">Tot. Shots</span>
-            </div>
-            <div class="score-item">
-                <span class="score-val"><span class="team-our" id="score-our-missed">0</span><span class="score-sep">/</span><span class="team-opp" id="score-opp-missed">0</span></span>
-                <span class="score-label">Missed</span>
-            </div>
-            <div class="score-item">
-                <span class="score-val"><span class="team-our" id="score-our-saves">0</span><span class="score-sep">/</span><span class="team-opp" id="score-opp-saves">0</span></span>
-                <span class="score-label">Saves</span>
             </div>
         </div>
     </div>
@@ -277,44 +243,26 @@
 
         <div class="grid-extended">
             <button class="stat-btn btn-card" onclick="handleStatClick('Yellow Card')">Y-Card</button>
-            <button class="stat-btn btn-utility" style="background-color: var(--teal);" onclick="exportResults()">Export</button>
+            <button class="stat-btn btn-utility" style="background-color: var(--teal);" onclick="exportResults()">Export & Copy</button>
             <button class="stat-btn btn-utility" style="background-color: #555;" id="half-tracker-btn" onclick="switchHalf()">H1/H2</button>
         </div>
         
         <div id="timer-container">
-            <div>
-                <span class="score-label" style="display:block;">GAME CLOCK</span>
-                <div id="game-timer" class="timer-paused">21:00</div>
-            </div>
+            <div id="game-timer" class="timer-paused">20:00</div>
             <div id="timer-controls">
                 <button id="timer-toggle-btn" onclick="toggleTimer()">START</button>
-                <button id="set-time-btn" onclick="setTimerDuration()">Set Time</button>
+                <button onclick="setTimerDuration()" style="border:none; background:none; color:var(--blue); font-size:10px;">Set</button>
             </div>
         </div>
 
         <div id="top-scorer-container">
             <div class="tracker-info">
-                <div class="tracker-label">Our Top Scorer</div>
+                <div class="tracker-label">Top Scorer (Our)</div>
                 <div class="tracker-details team-our" id="our-top-scorer">--</div>
             </div>
-            <div style="width: 1px; background-color: #eee; height: 20px;"></div>
             <div class="tracker-info">
-                <div class="tracker-label">Opp. Top Scorer</div>
+                <div class="tracker-label">Top Scorer (Opp)</div>
                 <div class="tracker-details team-opp" id="opp-top-scorer">--</div>
-            </div>
-        </div>
-
-        <div id="card-tracker-container">
-            <div class="tracker-info">
-                <div class="tracker-label">Our Yellow Cards</div>
-                <div class="tracker-details team-our" id="our-total-cards">0</div>
-                <div class="tracker-details sub-label team-our" id="our-card-leader">--</div>
-            </div>
-            <div style="width: 1px; background-color: #eee; height: 20px;"></div>
-            <div class="tracker-info">
-                <div class="tracker-label">Opp. Yellow Cards</div>
-                <div class="tracker-details team-opp" id="opp-total-cards">0</div>
-                <div class="tracker-details sub-label team-opp" id="opp-card-leader">--</div>
             </div>
         </div>
     </div>
@@ -323,29 +271,28 @@
 
     <div id="team-modal-overlay" class="modal-overlay">
         <div id="team-modal-container">
-            <div id="team-modal-title" class="modal-title">Who got the stat?</div>
+            <div id="team-modal-title" style="text-align:center; font-weight:bold;">Select Team</div>
             <div class="team-choice-grid">
                 <button class="team-choice-btn team-our-btn" onclick="selectTeam('Our')">Our Team</button>
                 <button class="team-choice-btn team-opp-btn" onclick="selectTeam('Opponent')">Opponent</button>
             </div>
-            <button onclick="closeModal('team')" style="width:100%; padding:10px; background:transparent; border:none; color:#007aff;">Cancel</button>
+            <button onclick="closeModal('team')" style="width:100%; padding:10px; border:none; background:none; color:var(--blue);">Cancel</button>
         </div>
     </div>
-    
+
     <div id="to-modal-overlay" class="modal-overlay">
         <div id="to-modal-container">
-            <div id="to-modal-title" class="modal-title">Turnover Classification</div>
+            <div style="text-align:center; font-weight:bold;">Turnover Type</div>
             <div class="team-choice-grid">
-                <button class="team-choice-btn team-our-btn" style="background-color: var(--teal);" onclick="classifyTurnover('Forced')">Forced</button>
-                <button class="team-choice-btn team-opp-btn" style="background-color: var(--orange);" onclick="classifyTurnover('Unforced')">Unforced</button>
+                <button class="team-choice-btn" style="background:var(--teal);" onclick="classifyTurnover('Forced')">Forced</button>
+                <button class="team-choice-btn" style="background:var(--orange);" onclick="classifyTurnover('Unforced')">Unforced</button>
             </div>
-            <button onclick="closeModal('to')" style="width:100%; padding:10px; background:transparent; border:none; color:#007aff;">Cancel</button>
+            <button onclick="closeModal('to')" style="width:100%; padding:10px; border:none; background:none; color:var(--blue);">Cancel</button>
         </div>
     </div>
 
     <div id="numpad-modal-overlay" class="modal-overlay">
         <div id="numpad-container">
-            <div id="numpad-title">Enter Player #</div>
             <div id="numpad-display">_</div>
             <div class="numpad-grid">
                 <button class="num-btn" onclick="numInput('1')">1</button><button class="num-btn" onclick="numInput('2')">2</button><button class="num-btn" onclick="numInput('3')">3</button>
@@ -355,7 +302,7 @@
                 <button class="num-btn" onclick="numInput('0')">0</button>
                 <button class="num-btn ok" onclick="submitNum()">OK</button>
             </div>
-            <button onclick="closeModal('numpad')" style="width:100%; margin-top:10px; padding:10px; background:transparent; border:none; color:#007aff;">Cancel</button>
+            <button onclick="closeModal('numpad')" style="width:100%; margin-top:10px; border:none; background:none; color:var(--blue);">Cancel</button>
         </div>
     </div>
 
@@ -399,8 +346,6 @@
             currentDurationMinutes = savedDur ? parseInt(savedDur) : 20;
             const savedTime = localStorage.getItem(`time_${currentGameID}`);
             timeLeftSeconds = (savedTime !== null) ? parseInt(savedTime) : (currentDurationMinutes * 60);
-            document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
-            document.getElementById('game-timer').className = 'timer-paused';
             updateUI();
             updateHalfButton();
         }
@@ -420,10 +365,7 @@
         }
 
         function stopTimerEngine() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             const btn = document.getElementById('timer-toggle-btn');
             const display = document.getElementById('game-timer');
             btn.innerText = 'START';
@@ -438,7 +380,6 @@
                 stopTimerEngine();
                 saveAndRender();
             } else {
-                if (timeLeftSeconds <= 0) return alert("Time expired.");
                 currentRunStartTime = Date.now();
                 const baseTime = timeLeftSeconds;
                 btn.innerText = 'PAUSE';
@@ -448,10 +389,7 @@
                     const elapsed = Math.floor((Date.now() - currentRunStartTime) / 1000);
                     timeLeftSeconds = Math.max(0, baseTime - elapsed);
                     display.innerText = formatTime(timeLeftSeconds);
-                    if (timeLeftSeconds <= 0) {
-                        stopTimerEngine();
-                        alert("Clock Expired!");
-                    }
+                    if (timeLeftSeconds <= 0) stopTimerEngine();
                 }, 200);
             }
         }
@@ -461,26 +399,21 @@
             if (val && !isNaN(val)) {
                 currentDurationMinutes = parseInt(val);
                 timeLeftSeconds = currentDurationMinutes * 60;
-                document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
                 saveAndRender();
             }
         }
 
         function handleStatClick(type) {
-            if (currentHalf === 3) return alert("Game Over. Start New Game.");
             pendingStat.type = type;
             pendingStat.requiresNumber = STATS_REQUIRING_NUM.includes(type);
-            document.getElementById('team-modal-title').innerText = (type === 'Save') ? "Shot taken by?" : `Who earned the ${type}?`;
             document.getElementById('team-modal-overlay').style.display = "flex";
         }
 
         function selectTeam(team) {
             pendingStat.team = team;
             closeModal('team');
-            const isSaveInterchanged = (team === 'Our' && pendingStat.type === 'Save');
             const needsNum = (team === 'Our' && pendingStat.requiresNumber) || 
-                            (team === 'Opponent' && ['Goal', 'Yellow Card', 'Save'].includes(pendingStat.type)) || 
-                            isSaveInterchanged;
+                            (team === 'Opponent' && ['Goal', 'Yellow Card', 'Save'].includes(pendingStat.type));
             if (needsNum) {
                 currentNumber = "";
                 document.getElementById('numpad-display').innerText = "_";
@@ -523,20 +456,13 @@
                     stopTimerEngine();
                     currentHalf = 2; 
                     timeLeftSeconds = currentDurationMinutes * 60; 
-                    document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
                 }
             } else if (currentHalf === 2) {
-                if(confirm("End Game?")) {
-                    stopTimerEngine();
-                    currentHalf = 3;
-                }
+                if(confirm("End Game?")) { stopTimerEngine(); currentHalf = 3; }
             } else {
                 if(confirm("Reset Game Data?")) { 
-                    stopTimerEngine();
-                    events = []; 
-                    currentHalf = 1; 
+                    events = []; currentHalf = 1; 
                     timeLeftSeconds = currentDurationMinutes * 60; 
-                    document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
                 }
             }
             updateHalfButton();
@@ -545,34 +471,19 @@
 
         function updateUI() {
             const count = (t, tm) => events.filter(e => e.type === t && e.team === tm).length;
-            const ourG = count('Goal', 'Our'), oppG = count('Goal', 'Opponent');
-            const ourM = count('Missed Shot', 'Our'), oppM = count('Missed Shot', 'Opponent');
-            const ourS = count('Save', 'Opponent'), oppS = count('Save', 'Our');
-            
-            document.getElementById('score-our-goals').innerText = ourG;
-            document.getElementById('score-opp-goals').innerText = oppG;
+            document.getElementById('score-our-goals').innerText = count('Goal', 'Our');
+            document.getElementById('score-opp-goals').innerText = count('Goal', 'Opponent');
             document.getElementById('score-our-draws').innerText = count('Draw', 'Our');
             document.getElementById('score-opp-draws').innerText = count('Draw', 'Opponent');
             document.getElementById('score-our-to').innerText = events.filter(e => e.type.includes('TO') && e.team === 'Our').length;
             document.getElementById('score-opp-to').innerText = events.filter(e => e.type.includes('TO') && e.team === 'Opponent').length;
-            document.getElementById('score-our-total-shots').innerText = ourG + oppS + ourM;
-            document.getElementById('score-opp-total-shots').innerText = oppG + ourS + oppM;
-            document.getElementById('score-our-missed').innerText = ourM;
-            document.getElementById('score-opp-missed').innerText = oppM;
-            document.getElementById('score-our-saves').innerText = ourS;
-            document.getElementById('score-opp-saves').innerText = oppS;
+            document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
 
             const hist = document.getElementById('history-container');
             hist.innerHTML = events.map(e => `
                 <div class="history-item">
-                    <div>
-                        <span class="history-info ${e.team === 'Our' ? 'team-our' : 'team-opp'}">${e.team === 'Our' ? 'OUR' : 'OPP'} ${e.type}</span>
-                        <span class="history-player">${e.player ? '#' + e.player : ''}</span>
-                    </div>
-                    <div>
-                        <span style="font-size:12px;">${e.time}</span>
-                        <button class="delete-btn" onclick="deleteEvent(${e.id})">✕</button>
-                    </div>
+                    <span class="${e.team === 'Our' ? 'team-our' : 'team-opp'}" style="font-size:12px; font-weight:bold;">${e.team}: ${e.type} ${e.player ? '#'+e.player : ''}</span>
+                    <span>${e.time} <button onclick="deleteEvent(${e.id})" style="color:red; border:none; background:none;">✕</button></span>
                 </div>
             `).join('');
 
@@ -588,15 +499,8 @@
                 for(let p in counts) if(counts[p] > leader.c) leader = {p, c: counts[p]};
                 return leader.c > 0 ? `#${leader.p} (${leader.c})` : '--';
             };
-
             document.getElementById('our-top-scorer').innerText = getLeader('Our', 'Goal');
             document.getElementById('opp-top-scorer').innerText = getLeader('Opponent', 'Goal');
-            const ourY = events.filter(e => e.type === 'Yellow Card' && e.team === 'Our').length;
-            const oppY = events.filter(e => e.type === 'Yellow Card' && e.team === 'Opponent').length;
-            document.getElementById('our-total-cards').innerText = ourY;
-            document.getElementById('opp-total-cards').innerText = oppY;
-            document.getElementById('our-card-leader').innerText = getLeader('Our', 'Yellow Card');
-            document.getElementById('opp-card-leader').innerText = getLeader('Opponent', 'Yellow Card');
         }
 
         function updateHalfButton() {
@@ -613,118 +517,63 @@
         function handleNoteClick() { const n = prompt("Note:"); if(n) addEvent('Note', 'Game', n); }
 
         function exportResults() {
-            const newStatSet = () => ({
-                'Goal': 0, 'Assist': 0, 'Shot': 0, 'Missed Shot': 0, 
-                'Save': 0, 'Draw': 0, 'Turnover': 0, 'Yellow Card': 0
-            });
-
-            const summary = {
-                'Our': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() },
-                'Opponent': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() }
-            };
-
-            // Added Yellow Card to contributors list
-            const contributors = {
-                'Our': { 'Goal': [], 'Assist': [], 'Turnover': [], 'Yellow Card': [] },
-                'Opponent': { 'Goal': [], 'Assist': [], 'Turnover': [], 'Yellow Card': [] }
-            };
-
+            const newStatSet = () => ({ 'Goal': 0, 'Assist': 0, 'Shot': 0, 'Missed Shot': 0, 'Save': 0, 'Draw': 0, 'Turnover': 0, 'Yellow Card': 0 });
+            const summary = { 'Our': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() }, 'Opponent': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() } };
+            const contributors = { 'Our': { 'Goal': [], 'Assist': [], 'Turnover': [], 'Yellow Card': [] }, 'Opponent': { 'Goal': [], 'Assist': [], 'Turnover': [], 'Yellow Card': [] } };
             const trackPlayer = ['Goal', 'Assist', 'Turnover', 'Yellow Card'];
 
             events.forEach(e => {
                 if (e.team !== 'Our' && e.team !== 'Opponent') return;
-                
                 let cat = e.type;
                 if (cat.includes('TO')) cat = 'Turnover';
                 if (cat === 'Draw Ctrl') cat = 'Draw';
+                const h = e.half; const team = e.team; const oppTeam = team === 'Our' ? 'Opponent' : 'Our';
 
-                const h = e.half; 
-                const team = e.team;
-                const oppTeam = team === 'Our' ? 'Opponent' : 'Our';
+                const inc = (t, c) => { if (summary[t][h]) summary[t][h][c]++; summary[t]['Total'][c]++; };
 
-                const inc = (t, c) => {
-                    if (summary[t][h]) summary[t][h][c]++;
-                    summary[t]['Total'][c]++;
-                };
-
-                // Track Players for specific stats (Total Column only)
-                if (trackPlayer.includes(cat) && e.player && e.player !== '?') {
-                    contributors[team][cat].push(e.player);
-                }
-
-                if (trackPlayer.includes(cat) || cat === 'Draw') {
-                    inc(team, cat);
-                }
-                
-                if (cat === 'Goal') {
-                    inc(team, 'Goal');
-                    inc(team, 'Shot');
-                } else if (cat === 'Missed Shot') {
-                    inc(team, 'Missed Shot');
-                    inc(team, 'Shot');
-                } else if (cat === 'Save') {
-                    inc(team, 'Save');
-                    inc(oppTeam, 'Shot'); 
-                }
+                if (trackPlayer.includes(cat) && e.player && e.player !== '?') contributors[team][cat].push(e.player);
+                if (trackPlayer.includes(cat) || cat === 'Draw') inc(team, cat);
+                if (cat === 'Goal') { inc(team, 'Goal'); inc(team, 'Shot'); }
+                else if (cat === 'Missed Shot') { inc(team, 'Missed Shot'); inc(team, 'Shot'); }
+                else if (cat === 'Save') { inc(team, 'Save'); inc(oppTeam, 'Shot'); }
             });
 
-            // Build Output
-            let content = "GAME SUMMARY\n";
-            content += "Category\tOur (H1)\tOur (H2)\tOur (Total)\tOpp (H1)\tOpp (H2)\tOpp (Total)\n";
-            
+            let content = "GAME SUMMARY\nCategory\tOur (H1)\tOur (H2)\tOur (Total)\tOpp (H1)\tOpp (H2)\tOpp (Total)\n";
             const rowKeys = ['Goal', 'Assist', 'Shot', 'Missed Shot', 'Save', 'Draw', 'Turnover', 'Yellow Card'];
             
             rowKeys.forEach(key => {
-                const getVal = (tm, hf) => summary[tm][hf] ? summary[tm][hf][key] : 0;
-                
                 const getTotalString = (tm) => {
                     let total = summary[tm]['Total'][key];
                     if (trackPlayer.includes(key) && contributors[tm][key].length > 0) {
                         const sorted = contributors[tm][key].sort((a,b) => parseInt(a) - parseInt(b));
-                        // Added '#' to output format
                         return `${total} (#${sorted.join(', #')})`;
                     }
                     return total;
                 };
-
-                content += `${key}\t` +
-                           `${getVal('Our', 1)}\t${getVal('Our', 2)}\t${getTotalString('Our')}\t` +
-                           `${getVal('Opponent', 1)}\t${getVal('Opponent', 2)}\t${getTotalString('Opponent')}\n`;
+                content += `${key}\t${summary['Our'][1][key]}\t${summary['Our'][2][key]}\t${getTotalString('Our')}\t${summary['Opponent'][1][key]}\t${summary['Opponent'][2][key]}\t${getTotalString('Opponent')}\n`;
             });
 
-            content += "\n----------------------------------\n";
-            content += "PLAY-BY-PLAY HISTORY\n";
-            content += "Half\tTime\tTeam\tStat\tPlayer\n";
-            
-            events.forEach(e => {
-                content += `${e.half}\t${e.time}\t${e.team}\t${e.type}\t${e.player || ''}\n`;
-            });
+            content += "\nPLAY-BY-PLAY\nHalf\tTime\tTeam\tStat\tPlayer\n";
+            events.forEach(e => { content += `${e.half}\t${e.time}\t${e.team}\t${e.type}\t${e.player || ''}\n`; });
 
-            // 1. Download File
+            // Robust Copy
+            const textArea = document.createElement("textarea");
+            textArea.value = content;
+            textArea.style.position = "fixed"; textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus(); textArea.select();
+            textArea.setSelectionRange(0, 99999);
+            let success = false;
+            try { success = document.execCommand('copy'); } catch (err) {}
+            document.body.removeChild(textArea);
+
+            // Download
             const blob = new Blob([content], { type: 'text/tab-separated-values' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `${currentGameID}_Stats_Summary.tsv`;
-            a.click();
+            a.href = url; a.download = `${currentGameID}_Stats.tsv`; a.click();
 
-            // 2. Copy to Clipboard
-            navigator.clipboard.writeText(content).then(() => {
-                alert("Data Exported!\n1. File Downloaded\n2. Copied to Clipboard (Ready to paste into Spreadsheet)");
-            }).catch(err => {
-                // Fallback for older browsers or non-secure contexts
-                const textArea = document.createElement("textarea");
-                textArea.value = content;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    alert("Data Exported!\n1. File Downloaded\n2. Copied to Clipboard");
-                } catch (err) {
-                    alert("File downloaded, but clipboard copy failed (browser restriction).");
-                }
-                document.body.removeChild(textArea);
-            });
+            alert(success ? "Data Copied to Clipboard & Downloaded!" : "File Downloaded (Clipboard copy blocked).");
         }
     </script>
 </body>
