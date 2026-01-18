@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LaxTracker Pro</title>
+    <title>LaxTracker Pro + Differential</title>
     <style>
         :root {
             --bg-color: #f2f2f7;
@@ -129,7 +129,7 @@
         .btn-note { background-color: #8e8e93; } 
         .btn-utility { padding: 8px; font-size: 12px; } 
 
-        #top-scorer-container, #card-tracker-container {
+        #top-scorer-container {
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -207,6 +207,7 @@
     <div id="game-identifier-bar">
         <span class="game-label">Game:</span>
         <input type="text" id="game-id-input" placeholder="Field/Team Name" onchange="switchGameContext()">
+        <button onclick="clearAllData()" style="background:none; border:none; color:#ff3b30; font-size:10px; font-weight:bold;">CLEAR</button>
     </div>
 
     <div id="scoreboard">
@@ -444,9 +445,19 @@
         }
 
         function deleteEvent(id) {
-            if(confirm("Delete?")) {
+            if(confirm("Delete this stat?")) {
                 events = events.filter(e => e.id !== id);
                 saveAndRender();
+            }
+        }
+
+        function clearAllData() {
+            if(confirm("WARNING: This will permanently delete ALL data for this game context. Continue?")) {
+                events = [];
+                currentHalf = 1;
+                timeLeftSeconds = currentDurationMinutes * 60;
+                saveAndRender();
+                updateHalfButton();
             }
         }
 
@@ -460,7 +471,7 @@
             } else if (currentHalf === 2) {
                 if(confirm("End Game?")) { stopTimerEngine(); currentHalf = 3; }
             } else {
-                if(confirm("Reset Game Data?")) { 
+                if(confirm("Reset Game Clock for new game? (Stats will be cleared)")) { 
                     events = []; currentHalf = 1; 
                     timeLeftSeconds = currentDurationMinutes * 60; 
                 }
@@ -538,7 +549,8 @@
                 else if (cat === 'Save') { inc(team, 'Save'); inc(oppTeam, 'Shot'); }
             });
 
-            let content = "GAME SUMMARY\nCategory\tOur (H1)\tOur (H2)\tOur (Total)\tOpp (H1)\tOpp (H2)\tOpp (Total)\n";
+            // HEADER WITH DIFFERENTIAL
+            let content = "GAME SUMMARY\nCategory\tOur (H1)\tOur (H2)\tOur (Total)\tOpp (H1)\tOpp (H2)\tOpp (Total)\tDifferential (O-O)\n";
             const rowKeys = ['Goal', 'Assist', 'Shot', 'Missed Shot', 'Save', 'Draw', 'Turnover', 'Yellow Card'];
             
             rowKeys.forEach(key => {
@@ -550,7 +562,12 @@
                     }
                     return total;
                 };
-                content += `${key}\t${summary['Our'][1][key]}\t${summary['Our'][2][key]}\t${getTotalString('Our')}\t${summary['Opponent'][1][key]}\t${summary['Opponent'][2][key]}\t${getTotalString('Opponent')}\n`;
+                
+                // Calculate Differential (Our Total - Opponent Total)
+                const diff = summary['Our']['Total'][key] - summary['Opponent']['Total'][key];
+                const diffString = diff > 0 ? `+${diff}` : diff;
+
+                content += `${key}\t${summary['Our'][1][key]}\t${summary['Our'][2][key]}\t${getTotalString('Our')}\t${summary['Opponent'][1][key]}\t${summary['Opponent'][2][key]}\t${getTotalString('Opponent')}\t${diffString}\n`;
             });
 
             content += "\nPLAY-BY-PLAY\nHalf\tTime\tTeam\tStat\tPlayer\n";
@@ -571,9 +588,9 @@
             const blob = new Blob([content], { type: 'text/tab-separated-values' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `${currentGameID}_Stats.tsv`; a.click();
+            a.href = url; a.download = `${currentGameID}_Summary.tsv`; a.click();
 
-            alert(success ? "Data Copied to Clipboard & Downloaded!" : "File Downloaded (Clipboard copy blocked).");
+            alert(success ? "Summary Copied & File Downloaded!" : "File Downloaded (Clipboard copy failed).");
         }
     </script>
 </body>
