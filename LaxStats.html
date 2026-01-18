@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -382,7 +382,7 @@
         function switchGameContext() {
             const input = document.getElementById('game-id-input').value.trim();
             if(!input) return;
-            stopTimerEngine(); // Ensure timer stops on context switch
+            stopTimerEngine(); 
             currentGameID = input;
             localStorage.setItem('lastActiveGame', currentGameID);
             loadGameData();
@@ -417,7 +417,6 @@
             return `${m.toString().padStart(2, '0')}:${rs.toString().padStart(2, '0')}`;
         }
 
-        // Helper to force stop the logic loop
         function stopTimerEngine() {
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -516,11 +515,10 @@
             }
         }
 
-        // FIXED: Stop the engine explicitly on transition
         function switchHalf() {
             if (currentHalf === 1) {
                 if(confirm("End H1?")) { 
-                    stopTimerEngine(); // Stop logic loop
+                    stopTimerEngine();
                     currentHalf = 2; 
                     timeLeftSeconds = currentDurationMinutes * 60; 
                     document.getElementById('game-timer').innerText = formatTime(timeLeftSeconds);
@@ -613,13 +611,81 @@
         function handleNoteClick() { const n = prompt("Note:"); if(n) addEvent('Note', 'Game', n); }
 
         function exportResults() {
-            let csv = "Half\tTime\tTeam\tStat\tPlayer\n";
-            events.forEach(e => csv += `${e.half}\t${e.time}\t${e.team}\t${e.type}\t${e.player || ''}\n`);
-            const blob = new Blob([csv], { type: 'text/tab-separated-values' });
+            // Helper to init stat object
+            const newStatSet = () => ({
+                'Goal': 0, 'Assist': 0, 'Shot': 0, 'Missed Shot': 0, 
+                'Save': 0, 'Draw': 0, 'Turnover': 0, 'Yellow Card': 0
+            });
+
+            // Summary Structure: team -> half -> category
+            const summary = {
+                'Our': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() },
+                'Opponent': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() }
+            };
+
+            // Aggregate Stats
+            events.forEach(e => {
+                if (e.team !== 'Our' && e.team !== 'Opponent') return;
+                
+                let cat = e.type;
+                if (cat.includes('TO')) cat = 'Turnover';
+                if (cat === 'Draw Ctrl') cat = 'Draw';
+
+                const h = e.half; 
+                const team = e.team;
+                const oppTeam = team === 'Our' ? 'Opponent' : 'Our';
+
+                const inc = (t, c) => {
+                    if (summary[t][h]) summary[t][h][c]++;
+                    summary[t]['Total'][c]++;
+                };
+
+                // Direct Stats
+                if (['Draw', 'Yellow Card', 'Assist', 'Turnover'].includes(cat)) {
+                    inc(team, cat);
+                }
+                
+                // Shot/Goal/Save Logic (Calculates "Total Shots" based on sub-events)
+                if (cat === 'Goal') {
+                    inc(team, 'Goal');
+                    inc(team, 'Shot');
+                } else if (cat === 'Missed Shot') {
+                    inc(team, 'Missed Shot');
+                    inc(team, 'Shot');
+                } else if (cat === 'Save') {
+                    inc(team, 'Save');
+                    // A Save by Team X implies a Shot by Team Y
+                    inc(oppTeam, 'Shot'); 
+                }
+            });
+
+            // Build Output String
+            let content = "GAME SUMMARY\n";
+            content += "Category\tOur (H1)\tOur (H2)\tOur (Total)\tOpp (H1)\tOpp (H2)\tOpp (Total)\n";
+            
+            const rowKeys = ['Goal', 'Assist', 'Shot', 'Missed Shot', 'Save', 'Draw', 'Turnover', 'Yellow Card'];
+            
+            rowKeys.forEach(key => {
+                const getVal = (tm, hf) => summary[tm][hf] ? summary[tm][hf][key] : 0;
+                
+                content += `${key}\t` +
+                           `${getVal('Our', 1)}\t${getVal('Our', 2)}\t${summary['Our']['Total'][key]}\t` +
+                           `${getVal('Opponent', 1)}\t${getVal('Opponent', 2)}\t${summary['Opponent']['Total'][key]}\n`;
+            });
+
+            content += "\n----------------------------------\n";
+            content += "PLAY-BY-PLAY HISTORY\n";
+            content += "Half\tTime\tTeam\tStat\tPlayer\n";
+            
+            events.forEach(e => {
+                content += `${e.half}\t${e.time}\t${e.team}\t${e.type}\t${e.player || ''}\n`;
+            });
+
+            const blob = new Blob([content], { type: 'text/tab-separated-values' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${currentGameID}_Stats.tsv`;
+            a.download = `${currentGameID}_Stats_Summary.tsv`;
             a.click();
         }
     </script>
