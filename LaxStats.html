@@ -606,7 +606,6 @@
 
         function numInput(v) {
             if(v === '?') { addEvent(pendingStat.type, pendingStat.team, '?'); closeModal('numpad'); return; }
-            // ALLOW UP TO 3 DIGITS NOW
             if(currentNumber.length < 3) { currentNumber += v; document.getElementById('numpad-display').innerText = currentNumber; }
         }
         function submitNum() { if(currentNumber) { addEvent(pendingStat.type, pendingStat.team, currentNumber); closeModal('numpad'); } }
@@ -619,17 +618,18 @@
                 'Save': 0, 'Draw': 0, 'Turnover': 0, 'Yellow Card': 0
             });
 
-            // Standard counts
             const summary = {
                 'Our': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() },
                 'Opponent': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() }
             };
 
-            // Player lists for specific categories
+            // Added Yellow Card to contributors list
             const contributors = {
-                'Our': { 'Goal': [], 'Assist': [], 'Turnover': [] },
-                'Opponent': { 'Goal': [], 'Assist': [], 'Turnover': [] }
+                'Our': { 'Goal': [], 'Assist': [], 'Turnover': [], 'Yellow Card': [] },
+                'Opponent': { 'Goal': [], 'Assist': [], 'Turnover': [], 'Yellow Card': [] }
             };
+
+            const trackPlayer = ['Goal', 'Assist', 'Turnover', 'Yellow Card'];
 
             events.forEach(e => {
                 if (e.team !== 'Our' && e.team !== 'Opponent') return;
@@ -642,18 +642,17 @@
                 const team = e.team;
                 const oppTeam = team === 'Our' ? 'Opponent' : 'Our';
 
-                // Increment Counts
                 const inc = (t, c) => {
                     if (summary[t][h]) summary[t][h][c]++;
                     summary[t]['Total'][c]++;
                 };
 
                 // Track Players for specific stats (Total Column only)
-                if (['Goal', 'Assist', 'Turnover'].includes(cat) && e.player && e.player !== '?') {
+                if (trackPlayer.includes(cat) && e.player && e.player !== '?') {
                     contributors[team][cat].push(e.player);
                 }
 
-                if (['Draw', 'Yellow Card', 'Assist', 'Turnover'].includes(cat)) {
+                if (trackPlayer.includes(cat) || cat === 'Draw') {
                     inc(team, cat);
                 }
                 
@@ -680,11 +679,10 @@
                 
                 const getTotalString = (tm) => {
                     let total = summary[tm]['Total'][key];
-                    // If this is a tracked category and has players, append them
-                    if (['Goal', 'Assist', 'Turnover'].includes(key) && contributors[tm][key].length > 0) {
-                        // Sort numbers numerically
+                    if (trackPlayer.includes(key) && contributors[tm][key].length > 0) {
                         const sorted = contributors[tm][key].sort((a,b) => parseInt(a) - parseInt(b));
-                        return `${total} (${sorted.join(', ')})`;
+                        // Added '#' to output format
+                        return `${total} (#${sorted.join(', #')})`;
                     }
                     return total;
                 };
@@ -702,12 +700,31 @@
                 content += `${e.half}\t${e.time}\t${e.team}\t${e.type}\t${e.player || ''}\n`;
             });
 
+            // 1. Download File
             const blob = new Blob([content], { type: 'text/tab-separated-values' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `${currentGameID}_Stats_Summary.tsv`;
             a.click();
+
+            // 2. Copy to Clipboard
+            navigator.clipboard.writeText(content).then(() => {
+                alert("Data Exported!\n1. File Downloaded\n2. Copied to Clipboard (Ready to paste into Spreadsheet)");
+            }).catch(err => {
+                // Fallback for older browsers or non-secure contexts
+                const textArea = document.createElement("textarea");
+                textArea.value = content;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    alert("Data Exported!\n1. File Downloaded\n2. Copied to Clipboard");
+                } catch (err) {
+                    alert("File downloaded, but clipboard copy failed (browser restriction).");
+                }
+                document.body.removeChild(textArea);
+            });
         }
     </script>
 </body>
