@@ -1,4 +1,4 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -213,7 +213,9 @@ l<!DOCTYPE html>
         .team-our-btn { background-color: var(--our-team-color); }
         .team-opp-btn { background-color: var(--opponent-color); }
         .modal-title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-        #numpad-display { font-size: 40px; font-weight: bold; text-align: center; margin-bottom: 20px; height: 50px; border-bottom: 2px solid #eee; }
+        
+        #numpad-display { font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 20px; height: 50px; border-bottom: 2px solid #eee; }
+        
         .numpad-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .num-btn { background: #e5e5ea; border: none; padding: 15px; font-size: 24px; border-radius: 10px; }
         .num-btn.ok { background-color: var(--our-team-color); color: white; }
@@ -604,26 +606,31 @@ l<!DOCTYPE html>
 
         function numInput(v) {
             if(v === '?') { addEvent(pendingStat.type, pendingStat.team, '?'); closeModal('numpad'); return; }
-            if(currentNumber.length < 2) { currentNumber += v; document.getElementById('numpad-display').innerText = currentNumber; }
+            // ALLOW UP TO 3 DIGITS NOW
+            if(currentNumber.length < 3) { currentNumber += v; document.getElementById('numpad-display').innerText = currentNumber; }
         }
         function submitNum() { if(currentNumber) { addEvent(pendingStat.type, pendingStat.team, currentNumber); closeModal('numpad'); } }
         function closeModal(m) { document.getElementById(m + '-modal-overlay').style.display = 'none'; }
         function handleNoteClick() { const n = prompt("Note:"); if(n) addEvent('Note', 'Game', n); }
 
         function exportResults() {
-            // Helper to init stat object
             const newStatSet = () => ({
                 'Goal': 0, 'Assist': 0, 'Shot': 0, 'Missed Shot': 0, 
                 'Save': 0, 'Draw': 0, 'Turnover': 0, 'Yellow Card': 0
             });
 
-            // Summary Structure: team -> half -> category
+            // Standard counts
             const summary = {
                 'Our': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() },
                 'Opponent': { 1: newStatSet(), 2: newStatSet(), 'Total': newStatSet() }
             };
 
-            // Aggregate Stats
+            // Player lists for specific categories
+            const contributors = {
+                'Our': { 'Goal': [], 'Assist': [], 'Turnover': [] },
+                'Opponent': { 'Goal': [], 'Assist': [], 'Turnover': [] }
+            };
+
             events.forEach(e => {
                 if (e.team !== 'Our' && e.team !== 'Opponent') return;
                 
@@ -635,17 +642,21 @@ l<!DOCTYPE html>
                 const team = e.team;
                 const oppTeam = team === 'Our' ? 'Opponent' : 'Our';
 
+                // Increment Counts
                 const inc = (t, c) => {
                     if (summary[t][h]) summary[t][h][c]++;
                     summary[t]['Total'][c]++;
                 };
 
-                // Direct Stats
+                // Track Players for specific stats (Total Column only)
+                if (['Goal', 'Assist', 'Turnover'].includes(cat) && e.player && e.player !== '?') {
+                    contributors[team][cat].push(e.player);
+                }
+
                 if (['Draw', 'Yellow Card', 'Assist', 'Turnover'].includes(cat)) {
                     inc(team, cat);
                 }
                 
-                // Shot/Goal/Save Logic (Calculates "Total Shots" based on sub-events)
                 if (cat === 'Goal') {
                     inc(team, 'Goal');
                     inc(team, 'Shot');
@@ -654,12 +665,11 @@ l<!DOCTYPE html>
                     inc(team, 'Shot');
                 } else if (cat === 'Save') {
                     inc(team, 'Save');
-                    // A Save by Team X implies a Shot by Team Y
                     inc(oppTeam, 'Shot'); 
                 }
             });
 
-            // Build Output String
+            // Build Output
             let content = "GAME SUMMARY\n";
             content += "Category\tOur (H1)\tOur (H2)\tOur (Total)\tOpp (H1)\tOpp (H2)\tOpp (Total)\n";
             
@@ -668,9 +678,20 @@ l<!DOCTYPE html>
             rowKeys.forEach(key => {
                 const getVal = (tm, hf) => summary[tm][hf] ? summary[tm][hf][key] : 0;
                 
+                const getTotalString = (tm) => {
+                    let total = summary[tm]['Total'][key];
+                    // If this is a tracked category and has players, append them
+                    if (['Goal', 'Assist', 'Turnover'].includes(key) && contributors[tm][key].length > 0) {
+                        // Sort numbers numerically
+                        const sorted = contributors[tm][key].sort((a,b) => parseInt(a) - parseInt(b));
+                        return `${total} (${sorted.join(', ')})`;
+                    }
+                    return total;
+                };
+
                 content += `${key}\t` +
-                           `${getVal('Our', 1)}\t${getVal('Our', 2)}\t${summary['Our']['Total'][key]}\t` +
-                           `${getVal('Opponent', 1)}\t${getVal('Opponent', 2)}\t${summary['Opponent']['Total'][key]}\n`;
+                           `${getVal('Our', 1)}\t${getVal('Our', 2)}\t${getTotalString('Our')}\t` +
+                           `${getVal('Opponent', 1)}\t${getVal('Opponent', 2)}\t${getTotalString('Opponent')}\n`;
             });
 
             content += "\n----------------------------------\n";
